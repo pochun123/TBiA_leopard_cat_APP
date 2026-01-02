@@ -9,6 +9,10 @@ library(reticulate)
 
 Sys.setenv(RETICULATE_PYTHON = "/opt/venv/bin/python")
 Sys.setenv(PATH = paste("/opt/venv/bin", Sys.getenv("PATH"), sep = ":"))
+try({
+  py_config()
+  message("Python Path Check: ", py_discover_config()$python)
+})
 source_python("ssqa_hf.py")  # 載入 RAG 查詢函數
 
 ui <- page_navbar(
@@ -262,4 +266,5 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
