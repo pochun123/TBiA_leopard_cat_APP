@@ -17,8 +17,11 @@ COPY . .
 # 安裝 R 套件
 RUN R -e "install.packages(c('shiny', 'leaflet', 'dplyr', 'lubridate', 'plotly', 'bslib', 'shinyjs', 'reticulate'))"
 
-# 安裝 Python 套件
-RUN pip3 install --no-cache-dir -r requirements.txt
+# 6. 建立 Python 虛擬環境並安裝套件
+# 建立路徑為 /opt/venv 的虛擬環境
+RUN python3 -m venv /opt/venv
+# 設定環境變數，讓系統優先使用虛擬環境中的 python 與 pip
+ENV PATH="/opt/venv/bin:$PATH"
 
 # 暴露埠號（Hugging Face 規定使用 7860）
 EXPOSE 7860
