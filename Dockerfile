@@ -19,11 +19,20 @@ COPY . .
 # 安裝 R 套件
 RUN R -e "install.packages(c('shiny', 'leaflet', 'dplyr', 'lubridate', 'plotly', 'bslib', 'shinyjs', 'reticulate'))"
 
-# 6. 建立 Python 虛擬環境並安裝套件
 # 建立路徑為 /opt/venv 的虛擬環境
-RUN python3 -m venv /opt/venv
-# 設定環境變數，讓系統優先使用虛擬環境中的 python 與 pip
+RUN python3 -m venv /opt/venv --without-pip
+# 使用絕對路徑強制在該環境內啟動 pip
+RUN /opt/venv/bin/python3 -m ensurepip
+RUN /opt/venv/bin/python3 -m pip install --upgrade pip
+# 強制使用虛擬環境內的 pip 安裝 requirements.txt 中的所有套件
+RUN /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# 設定權限，確保 Shiny 服務的使用者 (shiny) 有權限讀取虛擬環境與執行檔
+RUN chmod -R 755 /opt/venv /code
+
+# 設定環境變數，讓系統與 R 優先抓取此虛擬環境
 ENV PATH="/opt/venv/bin:$PATH"
+ENV RETICULATE_PYTHON="/opt/venv/bin/python"
 
 # 暴露埠號（Hugging Face 規定使用 7860）
 EXPOSE 7860
