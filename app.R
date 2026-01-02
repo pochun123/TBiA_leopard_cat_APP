@@ -6,12 +6,9 @@ library(plotly)
 library(bslib)
 library(shinyjs)
 library(reticulate)
-# 1. 禁用 reticulate 的自動下載與 Miniconda 功能
-Sys.setenv(RETICULATE_MINICONDA_ENABLED = "FALSE")
-Sys.setenv(RETICULATE_AUTOCONFIGURE = "FALSE")
 
-# 2. 強制指定 Docker 內建立的虛擬環境 Python 路徑
-use_python("/opt/venv/bin/python", required = TRUE)
+Sys.setenv(RETICULATE_PYTHON = "/opt/venv/bin/python")
+Sys.setenv(PATH = paste("/opt/venv/bin", Sys.getenv("PATH"), sep = ":"))
 source_python("ssqa_hf.py")  # 載入 RAG 查詢函數
 
 ui <- page_navbar(
@@ -265,3 +262,4 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
