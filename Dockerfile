@@ -5,8 +5,10 @@ FROM rocker/shiny-verse:latest
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3.12-venv \
     libssl-dev \
-    libcurl4-openssl-dev
+    libcurl4-openssl-dev \
+    libxml2-dev
 
 # 設定工作目錄
 WORKDIR /code
