@@ -7,12 +7,10 @@ library(bslib)
 library(shinyjs)
 library(reticulate)
 
-Sys.setenv(RETICULATE_PYTHON = "/opt/venv/bin/python")
-Sys.setenv(PATH = paste("/opt/venv/bin", Sys.getenv("PATH"), sep = ":"))
-try({
-  py_config()
-  message("Python Path Check: ", py_discover_config()$python)
-})
+use_python("/opt/venv/bin/python", required = TRUE)
+
+# 診斷代碼：如果你在 Logs 看到 langchain_huggingface 代表成功了
+message("Python 套件診斷：", paste(py_list_packages()$package, collapse = ", "))
 source_python("ssqa_hf.py")  # 載入 RAG 查詢函數
 
 ui <- page_navbar(
@@ -266,5 +264,6 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
 
