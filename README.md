@@ -3,7 +3,7 @@ title: 石虎保育 RAG 機器人
 emoji: 🐱
 colorFrom: green
 colorTo: gray
-sdk: shiny
+sdk: docker
 app_file: app.R
 ---
 
