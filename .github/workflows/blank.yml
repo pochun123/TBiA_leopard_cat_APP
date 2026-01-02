@@ -16,5 +16,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # 替換下方的 <你的HF帳號> 和 <Space名稱>
-          git push --force https://你的HF帳號名稱:$HF_TOKEN@huggingface.co/spaces/你的HF帳號名稱/Space名稱 main
+          git push --force https://AGRO123:$HF_TOKEN@huggingface.co/spaces/AGRO123/TiBA_Leopard_Cat main
