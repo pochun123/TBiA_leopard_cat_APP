@@ -6,17 +6,36 @@ library(plotly)
 library(bslib)
 library(shinyjs)
 library(reticulate)
+library(leaflet.extras)
 
 use_python("/opt/venv/bin/python", required = TRUE)
 
-# 診斷代碼：如果你在 Logs 看到 langchain_huggingface 代表成功了
-message("Python 套件診斷：", paste(py_list_packages()$package, collapse = ", "))
-source_python("ssqa_hf.py")  # 載入 RAG 查詢函數
+# 載入 RAG 查詢函數
+source_python("ssqa_hf.py") 
 
 ui <- page_navbar(
   title = "石虎保育大數據與 AI 助手",
   theme = bs_theme(version = 5, bootswatch = "minty", primary = "#C19A6B"),
   useShinyjs(),
+  header = tags$head(
+    tags$style("
+      /* 讓標題欄高度固定 */
+      .navbar { min-height: 50px; height: 60px; }
+      
+      /* 調整主內容區域 (container-fluid) 的間距 */
+      .container-fluid { 
+        padding-top: 5px !important; 
+        overflow-y: auto; /* 確保內容過長時可捲動 */
+      }
+      
+      /* 讓內容高度能自動延伸 */
+      body { height: auto; min-height: 100vh; }
+
+      .card-body {
+      overflow: hidden !important; /* 不要card滾輪 */
+      }
+    ")
+  ),
   
   # 自定義 CSS：處理懸浮聊天室
   tags$head(tags$style(HTML("
@@ -61,13 +80,12 @@ ui <- page_navbar(
     .ai-msg span { background: #e9ecef; color: #333; padding: 8px 12px; border-radius: 15px; display: inline-block; max-width: 80%; }
 
   "))),
-  
+
   # 分頁 1: 科普與參考資料
   nav_panel(
     title = "石虎科普與資料庫",
     icon = icon("circle-info"),
-    
-    # 使用 layout_column_wrap 取代原本錯誤的 container_fluid
+
     layout_column_wrap(
       width = 1, # 讓內容寬度佔滿
       style = "padding: 20px;", # 增加邊距讓內容不貼邊
@@ -77,22 +95,55 @@ ui <- page_navbar(
           title = "石虎簡介",
           layout_column_wrap(
             width = 1/2, # 平分為左右兩欄
-            # 左側文字
-            div(
-              h3("亞洲豹貓（石虎） Prionailurus bengalensis"),
-              tags$hr(),
-              p("石虎是台灣現存唯一的原生貓科野生動物，屬於亞洲豹貓的一個亞種。"),
-              tags$ul(
-                tags$li(tags$b("特徵："), "耳後有白斑、眼窩內側有兩條白線、身上有豹紋般的斑點。"),
-                tags$li(tags$b("棲地："), "主要分佈於海拔 800 公尺以下的淺山環境，如草生地、林地。"),
-                tags$li(tags$b("現況："), "目前族群數量估計僅剩約 500 隻，屬瀕危保育類動物。")
+            fill = TRUE,
+             # 1. 石虎現況
+            card(
+              card_header("石虎現況"),
+              card_body(
+                tags$ul(
+                tags$li(tags$b("分布："), "以中低海拔淺山丘陵（約1,500公尺以下），多見於農地-森林交錯地帶。"),
+                tags$li(tags$b("地位："), "淺山生態系頂級消費者與保護傘物種。")
+                )
+              )
+           ),
+      
+             # 2. 主要威脅
+            card(
+              card_header("主要威脅"),
+              card_body(
+                tags$ul(
+                tags$li("棲地破碎化與開發；道路路殺。"),
+                tags$li("人虎衝突：放養家禽遭捕食引發陷阱/毒餌。"),
+                tags$li("流浪犬貓攻擊與疾病傳播。"),
+                tags$li("農藥/滅鼠藥造成的二次中毒風險。")
+                )
               )
             ),
-            # 右側圖片
-            div(
-              tags$img(src = "shi.jpg", 
-                       width = "100%", 
-                       style = "border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);")
+      
+             # 3.保育行動
+            card(
+              card_header("保育行動"),
+              card_body(
+                tags$ul(
+                tags$li(tags$b("路殺熱點："), "熱區圍網/導流/通道。"),
+                tags$li(tags$b("犬貓管理："), "繫繩、結紮、移除遊蕩犬貓。"),
+                tags$li(tags$b("棲地連結："), "設置/維護生態廊道。"),
+                tags$li(tags$b("友善農法："), "減少高風險藥劑，補助代替死性控制。")
+                )
+              )
+            ),
+      
+             # 4. 你我能做什麼
+            card(
+              card_header("你我能做什麼"),
+              card_body(
+                tags$ul(
+                tags$li("夜晚、清晨行經西半部淺山地區，降低車速、注意路況。"),
+                tags$li("活體、路殺目擊請通報系統。"),
+                tags$li("犬貓飼主繫繩、結紮、不棄養寵物。"),
+                tags$li("支持環境友善產品，反對毒餌與獸鋏。")
+                )
+              )
             )
           )
         ),
@@ -103,7 +154,8 @@ ui <- page_navbar(
             tags$ul(
               tags$li(tags$a("農業部生物多樣性研究所", href = "https://www.tbri.gov.tw/", target = "_blank")),
               tags$li(tags$a("台灣石虎保育協會", href = "https://www.lcactw.org/", target = "_blank")),
-              tags$li(tags$a("環境資訊中心 - 石虎報導專區", href = "https://e-info.org.tw/", target = "_blank"))
+              tags$li(tags$a("國立自然科學博物館：認識石虎", href = "https://web3.nmns.edu.tw/exhibits/107/leopardcat/cont1.html", target = "_blank")),
+              tags$li(tags$a("臺灣生物多樣性資訊聯盟：物種出現紀錄查詢", href = "https://tbiadata.tw/zh-hant/search/occurrence?record_type=occ&name=%E8%B1%B9%E8%B2%93&page=1&from=search&limit=10", target = "_blank"))
             ),
             hr(),
             p(style = "color: gray; font-style: italic;", "本系統之數據僅供學術交流使用，若有引用需求請洽相關主管機關。")
@@ -125,7 +177,9 @@ ui <- page_navbar(
         hr(),
         selectInput("county", "選擇縣市：", choices = NULL),
         checkboxGroupInput("municipality", "選擇鄉鎮市：", choices = NULL),
-        actionButton("municipality_all", "全選/取消鄉鎮", class = "btn-sm")
+        actionButton("municipality_all", "全選/取消鄉鎮", class = "btn-sm"),
+        hr(),
+        radioButtons("map_type", "地圖類型：", choices = c("標點圖" = "markers", "熱點圖" = "heatmap"), selected = "markers")
       ),
       # 主顯示區：上方地圖，下方圖表
       card(
@@ -140,9 +194,9 @@ ui <- page_navbar(
       )
     )
   ),
-  
-  # --- 全域懸浮 AI 助手 (放在 footer 確保跨頁存在) ---
-  footer = tags$div(
+
+    # --- 全域懸浮對話框 (放在 footer 確保跨頁存在) ---
+    footer = tags$div(
     actionButton("chat_fab", icon("comment-dots", class = "fa-2x"), class = "btn-primary"),
     div(id = "chat_window",
         div(class = "chat-header",
@@ -151,24 +205,34 @@ ui <- page_navbar(
         ),
         div(class = "chat-body", uiOutput("chat_history")),
         div(class = "chat-footer",
-            div(class = "input-group-container",
-                textInput("question", NULL, placeholder = "詢問關於石虎的問題...", width = "100%"),
-                actionButton("ask", NULL, icon = icon("paper-plane"), class = "btn-primary")
-            )
+          div(class = "input-group-container",
+          textInput("question", NULL, placeholder = "詢問關於石虎的問題...", width = "100%"),
+          actionButton("ask", NULL, icon = icon("paper-plane"), class = "btn-primary")
+          )
         )
-        
+
     )
   )
 )
 
 server <- function(input, output, session) {
-  # --- 1. 數據處理邏輯 (地圖與圖表) ---
+  # ---  數據處理邏輯 (地圖與圖表) ---
   rv <- reactiveVal(data.frame())
   
   observeEvent(input$file, {
     req(input$file)
     df <- read.csv(input$file$datapath, stringsAsFactors = FALSE)
-    df$date <- as.Date(df$date)
+    required_cols <- c("latitude", "longitude", "county", "municipality", "date")
+    if (!all(required_cols %in% colnames(df))) {
+      showNotification("上傳的檔案缺少必要欄位，請確認包含：latitude, longitude, county, municipality, date", type = "error")
+      return()
+    }
+    df$date <- parse_date_time(df$date, orders = c("ymd", "y/m/d", "mdy")) %>% as.Date()
+    df <- df[!is.na(df$date), ]
+    if (nrow(df) == 0) {
+      showNotification("日期格式解析失敗，請確認為 YYYY-MM-DD", type = "error")
+      return()
+    }
     df$year <- year(df$date)
     rv(df)
     
@@ -183,10 +247,17 @@ server <- function(input, output, session) {
     updateCheckboxGroupInput(session, "year", selected = if(length(input$year) == length(all_years)) character(0) else all_years)
   })
   
-  observeEvent(input$municipality_all, {
+  observeEvent(input$county, {
     df <- rv()
-    all_muni <- unique(df$municipality)
-    updateCheckboxGroupInput(session, "municipality", selected = if(length(input$municipality) == length(all_muni)) character(0) else all_muni)
+    req(nrow(df) > 0, input$county)
+    # 根據所選縣市，找出對應的鄉鎮
+    available_muni <- df %>% 
+      filter(county == input$county) %>% 
+      pull(municipality) %>% 
+      unique() %>% 
+      sort()
+  
+    updateCheckboxGroupInput(session, "municipality", choices = available_muni, selected = available_muni)
   })
   
   filteredData <- reactive({
@@ -197,17 +268,41 @@ server <- function(input, output, session) {
   })
   
   output$map <- renderLeaflet({
-    leaflet() %>% addProviderTiles(providers$CartoDB.Positron) %>% setView(120.97, 23.97, zoom = 7)
+  leaflet() %>% 
+    addProviderTiles(providers$CartoDB.Positron) %>% 
+    setView(120.82, 24.56, zoom = 8) 
   })
-  
+
   observe({
     df <- filteredData()
-    if (nrow(df) == 0) { leafletProxy("map") %>% clearMarkers(); return() }
-    pal <- colorFactor("Set1", domain = rv()$year)
-    leafletProxy("map", data = df) %>%
-      clearMarkers() %>%
-      addCircleMarkers(~longitude, ~latitude, radius = 6, color = ~pal(year), fillOpacity = 0.8,
-                       popup = ~paste0("縣市: ", county, "<br>鄉鎮: ", municipality, "<br>年份: ", year))
+    proxy <- leafletProxy("map", data = df)
+  
+    # 先清除舊的所有圖層 (包含標點與熱點)
+    proxy %>% clearMarkers() %>% clearHeatmap()
+  
+    if (nrow(df) == 0) return()
+    pal <- colorFactor("Set1", domain = df$year)
+
+    if (input$map_type == "heatmap") {
+      proxy %>% addHeatmap(
+        lng = ~longitude, lat = ~latitude, 
+        blur = 20, max = 0.5, radius = 15
+      )
+    } else {
+      proxy %>% addCircleMarkers(
+        ~longitude, ~latitude, 
+        radius = 6, 
+        color = ~pal(year), 
+        fillOpacity = 0.8,
+        stroke = TRUE, weight = 1,
+        popup = ~paste0(
+          "<b>地點資訊</b><br>",
+          "縣市: ", county, "<br>",
+          "鄉鎮: ", municipality, "<br>",
+          "年份: ", year
+        )
+      )
+    }
   })
   
   output$lineplot <- renderPlotly({
@@ -217,8 +312,8 @@ server <- function(input, output, session) {
     plot_ly(df_summary, x = ~as.factor(year), y = ~count, color = ~county, type = 'scatter', mode = 'lines+markers') %>%
       layout(xaxis = list(title = "年份", type = "category"), yaxis = list(title = "觀測次數"))
   })
-  
-  # --- 2. AI 助手邏輯 (RAG) ---
+
+  # ---  AI 助手邏輯 (RAG) ---
   history <- reactiveValues(logs = list())
   
   observeEvent(input$chat_fab, { runjs("$('#chat_window').toggle();") })
@@ -228,16 +323,16 @@ server <- function(input, output, session) {
     req(input$question)
     user_q <- input$question
     
-    # A. 立即處理 UI：清空輸入框、顯示通知、存入使用者問題
+    # 處理 UI：清空輸入框、顯示通知、存入使用者問題
     updateTextInput(session, "question", value = "") 
     showNotification("石虎助手正在查詢資料庫...", type = "message", duration = 2)
     
-    # 將使用者問題存入歷史紀錄 (這步沒做，UI 就不會顯示你問了什麼)
+    # 將使用者問題存入歷史紀錄
     history$logs <- c(history$logs, list(list(role = "user", text = user_q)))
     
-    # B. 呼叫 Python (只呼叫一次)
+    # 呼叫 Python
     ai_res <- tryCatch({
-      rag_query(user_q) # 確保這裡只執行一次
+      rag_query(user_q) 
     }, error = function(e) {
       paste("系統錯誤:", e$message)
     })
@@ -249,10 +344,9 @@ server <- function(input, output, session) {
     runjs("$('.chat-body').scrollTop($('.chat-body')[0].scrollHeight);")
   })
   
-  # 渲染對話 (確保 ID 與 UI 中的 uiOutput("chat_history") 相同)
+
   output$chat_history <- renderUI({
     req(history$logs)
-    # 使用 tagList 包裹，確保 HTML 結構正確渲染
     tagList(
       lapply(history$logs, function(log) {
         div(class = ifelse(log$role == "user", "user-msg", "ai-msg"), 
@@ -264,6 +358,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
 
 
