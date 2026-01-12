@@ -17,7 +17,7 @@ WORKDIR /code
 COPY . .
 
 # 安裝 R 套件
-RUN R -e "install.packages(c('shiny', 'leaflet', 'dplyr', 'lubridate', 'plotly', 'bslib', 'shinyjs', 'reticulate'))"
+RUN R -e "install.packages(c('shiny', 'leaflet', 'dplyr', 'lubridate', 'plotly', 'bslib', 'shinyjs', 'reticulate', 'leaflet.extras'))"
 
 # 建立路徑為 /opt/venv 的虛擬環境
 RUN python3 -m venv /opt/venv --without-pip
