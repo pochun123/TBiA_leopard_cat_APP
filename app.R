@@ -41,7 +41,7 @@ ui <- page_navbar(
   tags$head(tags$style(HTML("
     #chat_fab { position: fixed; bottom: 25px; right: 25px; width: 60px; height: 60px; border-radius: 50%; z-index: 1000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 
-    #chat_window { position: fixed; bottom: 95px; right: 25px; width: 350px; height: 420px; background: white; border-radius: 15px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 5px 25px rgba(0,0,0,0.2); border: 1px solid #ddd; }
+    #chat_window { position: fixed; bottom: 95px; right: 25px; width: 350px; height: 390px; background: white; border-radius: 15px; display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 5px 25px rgba(0,0,0,0.2); border: 1px solid #ddd; }
 
     .chat-header { background: #2c3e50; color: white; padding: 12px; border-radius: 15px 15px 0 0; display: flex; justify-content: space-between; align-items: center; }
 
@@ -358,6 +358,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
 
 
