@@ -1,5 +1,5 @@
 import os
-from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint
+from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint, ChatHuggingFace
 from langchain_chroma import Chroma
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -18,12 +18,14 @@ retriever = vectorstore.as_retriever()
 # 2. 設定 LLM
 # -------------------------------
 hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
-llm = HuggingFaceEndpoint(
+llm_1 = HuggingFaceEndpoint(
     repo_id="Qwen/Qwen2.5-7B-Instruct",
     task="conversational",
     huggingfacehub_api_token=hf_token,
     temperature=0
 )
+
+llm = ChatHuggingFace(llm=llm_1)
 
 # -------------------------------
 # 3. 設定 Prompt
@@ -55,4 +57,5 @@ rag_chain = (
 def rag_query(user_question: str) -> str:
     response = rag_chain.invoke(user_question)
     return response.content
+
 
