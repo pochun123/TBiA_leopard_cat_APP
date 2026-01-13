@@ -19,8 +19,8 @@ retriever = vectorstore.as_retriever()
 # -------------------------------
 hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 llm = HuggingFaceEndpoint(
-    repo_id="meta-llama/Meta-Llama-3-8B-Instruct",
-    task="text-generation",
+    repo_id="Qwen/Qwen2.5-7B-Instruct",
+    task="conversational",
     huggingfacehub_api_token=hf_token,
     temperature=0
 )
@@ -55,3 +55,4 @@ rag_chain = (
 def rag_query(user_question: str) -> str:
     response = rag_chain.invoke(user_question)
     return response.content
+
