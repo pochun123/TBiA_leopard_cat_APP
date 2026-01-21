@@ -296,29 +296,14 @@ server <- function(input, output, session) {
   })
   
   output$map <- renderLeaflet({
-    df <- filteredData()
-  
-    p <- leaflet() %>% 
+  leaflet() %>% 
     addProviderTiles(providers$CartoDB.Positron) %>% 
-    setView(120.82, 24.56, zoom = 8)
-
-    # Sample Data 載入成功，直接畫上去
-    if (nrow(df) > 0) {
-      pal <- colorFactor("Set1", domain = df$year)
-      if (input$map_type == "heatmap") {
-        p <- p %>% addHeatmap(lng = ~longitude, lat = ~latitude, blur = 20, max = 0.5, radius = 15)
-      } else {
-        p <- p %>% addCircleMarkers(
-          ~longitude, ~latitude, radius = 6, color = ~pal(year),
-          fillOpacity = 0.8, popup = ~paste0("年份: ", year)
-        )
-      }
-    }
-    return(p)
+    setView(120.82, 24.56, zoom = 8) 
   })
 
   observe({
     df <- filteredData()
+    req(nrow(df) > 0)
     proxy <- leafletProxy("map", data = df)
   
     # 先清除舊的所有圖層 (包含標點與熱點)
@@ -402,6 +387,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
 
 
