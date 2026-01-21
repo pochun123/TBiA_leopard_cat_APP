@@ -257,7 +257,7 @@ server <- function(input, output, session) {
 
   observeEvent(input$file, {
     req(input$file)
-    df_user <- process_data(input$file$datapath)
+    df_user <- check_data(input$file$datapath)
   
     if (!is.null(df_user)) {
       rv(df_user)
@@ -296,9 +296,25 @@ server <- function(input, output, session) {
   })
   
   output$map <- renderLeaflet({
-  leaflet() %>% 
+    df <- filteredData()
+  
+    p <- leaflet() %>% 
     addProviderTiles(providers$CartoDB.Positron) %>% 
-    setView(120.82, 24.56, zoom = 8) 
+    setView(120.82, 24.56, zoom = 8)
+
+    # Sample Data 載入成功，直接畫上去
+    if (nrow(df) > 0) {
+      pal <- colorFactor("Set1", domain = df$year)
+      if (input$map_type == "heatmap") {
+        p <- p %>% addHeatmap(lng = ~longitude, lat = ~latitude, blur = 20, max = 0.5, radius = 15)
+      } else {
+        p <- p %>% addCircleMarkers(
+          ~longitude, ~latitude, radius = 6, color = ~pal(year),
+          fillOpacity = 0.8, popup = ~paste0("年份: ", year)
+        )
+      }
+    }
+    return(p)
   })
 
   observe({
@@ -386,6 +402,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
 
 
