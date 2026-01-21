@@ -242,7 +242,7 @@ server <- function(input, output, session) {
   rv <- reactiveVal(data.frame())
 
   observe({
-    sample_path <- "Sample Data/shihu_location.csv"
+    sample_path <- "Sample Data/mia.csv"
     if (file.exists(sample_path)) {
       df_sample <- check_data(sample_path)
       if (!is.null(df_sample)) {
@@ -386,6 +386,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
 
 
