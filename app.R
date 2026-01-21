@@ -217,28 +217,56 @@ ui <- page_navbar(
 
 server <- function(input, output, session) {
   # ---  數據處理邏輯 (地圖與圖表) ---
-  rv <- reactiveVal(data.frame())
+  check_data <- function(path) {
+  df <- read.csv(path, stringsAsFactors = FALSE)
+  required_cols <- c("latitude", "longitude", "county", "municipality", "date")
   
+  if (!all(required_cols %in% colnames(df))) {
+    showNotification("檔案缺少必要欄位：latitude, longitude, county, municipality, date", type = "error")
+    return(NULL)
+  }
+  
+  # 日期處理
+  df$date <- parse_date_time(df$date, orders = c("ymd", "y/m/d", "mdy", "d/m/y")) %>% as.Date()
+  df <- df[!is.na(df$date), ]
+  
+  if (nrow(df) == 0) {
+    showNotification("日期格式解析失敗，請確認格式", type = "error")
+    return(NULL)
+  }
+  
+  df$year <- year(df$date)
+  return(df)
+  }
+
+  rv <- reactiveVal(data.frame())
+
+  observe({
+    sample_path <- "Sample Data/shihu_location.csv"
+    if (file.exists(sample_path)) {
+      df_sample <- check_data(sample_path)
+      if (!is.null(df_sample)) {
+        rv(df_sample)
+        # 同步更新 UI 選單
+        updateCheckboxGroupInput(session, "year", choices = sort(unique(df_sample$year)), selected = sort(unique(df_sample$year)))
+        updateSelectInput(session, "county", choices = unique(df_sample$county), selected = unique(df_sample$county)[1])
+        updateCheckboxGroupInput(session, "municipality", choices = unique(df_sample$municipality), selected = unique(df_sample$municipality))
+      }
+    }
+  })
+
   observeEvent(input$file, {
     req(input$file)
-    df <- read.csv(input$file$datapath, stringsAsFactors = FALSE)
-    required_cols <- c("latitude", "longitude", "county", "municipality", "date")
-    if (!all(required_cols %in% colnames(df))) {
-      showNotification("上傳的檔案缺少必要欄位，請確認包含：latitude, longitude, county, municipality, date", type = "error")
-      return()
+    df_user <- process_data(input$file$datapath)
+  
+    if (!is.null(df_user)) {
+      rv(df_user)
+      # 同步更新 UI 選單
+      updateCheckboxGroupInput(session, "year", choices = sort(unique(df_user$year)), selected = sort(unique(df_user$year)))
+      updateSelectInput(session, "county", choices = unique(df_user$county), selected = unique(df_user$county)[1])
+      updateCheckboxGroupInput(session, "municipality", choices = unique(df_user$municipality), selected = unique(df_user$municipality))
+      showNotification("已成功載入上傳資料", type = "message")
     }
-    df$date <- parse_date_time(df$date, orders = c("ymd", "y/m/d", "mdy")) %>% as.Date()
-    df <- df[!is.na(df$date), ]
-    if (nrow(df) == 0) {
-      showNotification("日期格式解析失敗，請確認為 YYYY-MM-DD", type = "error")
-      return()
-    }
-    df$year <- year(df$date)
-    rv(df)
-    
-    updateCheckboxGroupInput(session, "year", choices = sort(unique(df$year)), selected = sort(unique(df$year)))
-    updateSelectInput(session, "county", choices = unique(df$county), selected = unique(df$county)[1])
-    updateCheckboxGroupInput(session, "municipality", choices = unique(df$municipality), selected = unique(df$municipality))
   })
   
   observeEvent(input$year_all, {
@@ -358,6 +386,7 @@ server <- function(input, output, session) {
 
 
 shinyApp(ui, server)
+
 
 
 
