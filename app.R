@@ -7,7 +7,6 @@ library(bslib)
 library(shinyjs)
 library(reticulate)
 library(leaflet.extras)
-
 use_python("/opt/venv/bin/python", required = TRUE)
 
 # 載入 RAG 查詢函數
